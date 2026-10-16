@@ -1,0 +1,39 @@
+# Rule-based fusion baseline (F10/F11). Each feature's raw segment value is turned into a
+# 0-1 "goodness" with a trapezoid band [zero_below, one_from, one_until, zero_above].
+# Trait score = weighted mean of the available goodness values x 100 (weights renormalised
+# when a modality is missing). Tune bands here, not in code.
+
+features:
+  pace:            {metric: wpm,            band: [70, 120, 165, 230],  label: "Speaking pace",       unit: "wpm"}
+  fluency:         {metric: filler_rate,    band: [-1, -0.5, 2, 10],    label: "Filler words",        unit: "/min"}
+  pausing:         {metric: pause_ratio,    band: [-0.1, 0.03, 0.25, 0.6], label: "Pausing",          unit: "of time"}
+  pitch_variation: {metric: pitch_std_st,   band: [0.4, 1.8, 6.0, 10.0], label: "Pitch variation",    unit: "semitones"}
+  vocal_energy:    {metric: energy_rel_db,  band: [-12, -3, 8, 20],     label: "Vocal energy",        unit: "dB vs. your median"}
+  audience_gaze:   {metric: on_grid,        band: [0.2, 0.75, 1.01, 1.1], label: "Looking at the audience", unit: "of time"}
+  gaze_movement:   {metric: gaze_cells,     band: [0, 2, 9, 10],        label: "Gaze movement",       unit: "zones"}
+  head_stability:  {metric: head_motion,    band: [-1, 0, 3, 10],       label: "Head steadiness",     unit: "deg jitter"}
+  blink_calm:      {metric: blink_rate,     band: [-1, 0, 30, 60],      label: "Blink rate",          unit: "/min"}
+  expressiveness:  {metric: face_va_std,    band: [0, 0.06, 0.6, 1.0],  label: "Facial expressiveness", unit: "V-A std"}
+  vocal_arousal:   {metric: audio_arousal,  band: [-1.1, -0.35, 0.75, 1.1], label: "Vocal energy (affect)", unit: "arousal"}
+  facial_warmth:   {metric: face_valence,   band: [-1.1, -0.25, 1.0, 1.1], label: "Facial warmth",     unit: "valence"}
+  calm_physiology: {metric: bpm_rise,       band: [-100, -99, 8, 30],   label: "Heart-rate rise",     unit: "BPM over baseline"}
+
+traits:
+  confidence:
+    label: Confidence
+    weights: {pace: 0.15, fluency: 0.25, pausing: 0.10, audience_gaze: 0.20, head_stability: 0.10, vocal_energy: 0.10, calm_physiology: 0.10}
+  authoritativeness:
+    label: Authoritativeness
+    weights: {pace: 0.20, fluency: 0.20, vocal_energy: 0.20, audience_gaze: 0.15, head_stability: 0.15, pausing: 0.10}
+  engagement:
+    label: Engagement
+    weights: {pitch_variation: 0.25, expressiveness: 0.20, gaze_movement: 0.20, vocal_arousal: 0.15, facial_warmth: 0.10, pace: 0.10}
+
+mismatch:
+  # Euclidean distance between audio and face (valence, arousal) segment means; range 0..2.83.
+  # Calibrate on congruent clips (training/e3_fusion.ipynb prints the 95th percentile).
+  distance_threshold: 0.9
+  rules:
+    smile_flat_voice:   {face_valence_min: 0.25, audio_arousal_max: -0.30, message: "Smiling face but a flat, low-energy voice"}
+    flat_face_loud:     {audio_arousal_min: 0.45, face_valence_abs_max: 0.10, face_arousal_max: -0.20, message: "Energetic voice but a blank face"}
+    smile_bad_news:     {face_valence_min: 0.30, text_sentiment_max: -0.30, message: "Smiling while saying something negative"}

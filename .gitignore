@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Data, weights, outputs
+data/
+models/*
+!models/README.md
+eval/results/
+tests/fixtures/*.mp4
+tests/fixtures/*.webm
+!tests/fixtures/README.md
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,17 @@
+[project]
+name = "vaktaai"
+version = "0.1.0"
+description = "VaktaAI - multimodal speech coach"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["backend", "."]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "models: needs downloaded model weights (run with VAKTA_RUN_MODEL_TESTS=1)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
